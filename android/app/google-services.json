@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "156439815498",
+    "firebase_url": "https://princeofpizza-a144e.firebaseio.com",
+    "project_id": "princeofpizza-a144e",
+    "storage_bucket": "princeofpizza-a144e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:156439815498:android:3b9c0d83383c341ea08db3",
+        "android_client_info": {
+          "package_name": "com.myprinceofpizza.www.prince_of_pizza"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "156439815498-8el35im4udb01suprkumefe208rm0aqt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWe0-wmchxj7F0UIjKA0zQBXZn_QsV4vk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "156439815498-8el35im4udb01suprkumefe208rm0aqt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
