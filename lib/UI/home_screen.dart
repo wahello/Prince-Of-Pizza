@@ -41,11 +41,19 @@ class HomeScreenBody extends StatelessWidget {
   Widget build(BuildContext context) {
 
     FirebaseAuth.instance.currentUser().then((onValue) {
+      //123qwe
       if (onValue != null && onValue.email == "prince@of.pizza") {
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => AdminPanal()));
       }
     });
+
+    List<Widget> discount(Map<String, Object> data) {
+      List<Widget> lines = [];
+      var list = data["details"].toString().split(',');
+      for (String j in list) lines.add(SubTitleWidget(j, i: 1));
+      return lines;
+    }
 
     Firestore.instance.settings(persistenceEnabled: true);
     return ListView(
@@ -91,31 +99,10 @@ class HomeScreenBody extends StatelessWidget {
                         SubTitleWidget(
                             snapshot.data.documents[0].data["address"]),
                         SubTitleWidget(snapshot.data.documents[0].data["line"]),
-                        snapshot.data.documents[1].data["one"] == null
-                            ? SizedBox()
-                            : SubTitleWidget(
-                                snapshot.data.documents[1].data["one"],
-                                i: 1),
-                        snapshot.data.documents[1].data["two"] == null
-                            ? SizedBox()
-                            : SubTitleWidget(
-                                snapshot.data.documents[1].data["two"],
-                                i: 1),
-                        snapshot.data.documents[1].data["three"] == null
-                            ? SizedBox()
-                            : SubTitleWidget(
-                                snapshot.data.documents[1].data["three"],
-                                i: 1),
-                        snapshot.data.documents[1].data["four"] == null
-                            ? SizedBox()
-                            : SubTitleWidget(
-                                snapshot.data.documents[1].data["four"],
-                                i: 1),
-                        snapshot.data.documents[1].data["five"] == null
-                            ? SizedBox()
-                            : SubTitleWidget(
-                                snapshot.data.documents[1].data["five"],
-                                i: 1),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: discount(snapshot.data.documents[1].data),
+                        ),
                         SizedBox(height: 8),
                         MySeparator(
                           color: Colors.grey,

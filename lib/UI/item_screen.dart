@@ -10,10 +10,10 @@ import 'package:prince_of_pizza/dataBase/Database.dart';
 
 int amount;
 int type;
-var topping;
 double tPrice;
 String currentPrice;
 TextEditingController _controller;
+Map<String, Map<String, String>> widgetList;
 
 class ItemScreen extends StatefulWidget {
   final String cata;
@@ -29,11 +29,11 @@ class _ItemScreenState extends State<ItemScreen> {
     super.initState();
     currentPrice = widget.data.data["price"];
     tPrice = double.parse(currentPrice.substring(1, currentPrice.length - 1));
-    topping = List.generate(10, (i) => List(1), growable: false);
     type = 0;
     amount = 1;
     _controller = null;
     _controller = new TextEditingController();
+    widgetList = new Map<String, Map<String, String>>();
   }
 
   fun() {
@@ -84,7 +84,9 @@ class _ItemScreenState extends State<ItemScreen> {
               }
             },
             icon: Icon(Icons.shopping_cart),
-            label: Text('Add To Cart (' + (tPrice * amount).toString().substring(0,4) + "\$)"),
+            label: Text('Add To Cart (' +
+                (tPrice * amount).toString().substring(0, 4) +
+                "\$)"),
             backgroundColor: Colors.redAccent,
           ),
         ),
@@ -101,11 +103,16 @@ String calculatePriceWithSymboles(String second, int i) {
     first = first.substring(0, first.length - 1);
   second = second.substring(0, second.length - 1);
   double pri = (double.parse(second) - double.parse(first));
-  String val = pri.toString().length > 4 ? pri.toString().substring(0,5) : pri.toString();
+  String val = pri.toString().length > 4
+      ? pri.toString().substring(0, 5)
+      : pri.toString();
   if (first == second) {
     type = i;
-    String temp = tPrice.toString().length > 5 ? tPrice.toString().substring(0,4) : tPrice.toString();
-    return temp + "\$";
+    // String temp = tPrice.toString().length > 5
+    //     ? tPrice.toString().substring(0, 4)
+    // : tPrice.toString();
+    //return temp + "\$";
+    return "";
   } else {
     if (val.contains("-") == true) return val + "\$";
     return "+" + val + "\$";
@@ -120,10 +127,14 @@ String calculatePrice(String second, int i) {
     first = first.substring(0, first.length - 1);
   second = second.substring(0, second.length - 1);
   double pri = (double.parse(second) - double.parse(first));
-  String val = pri.toString().length > 4 ? pri.toString().substring(0,4) : pri.toString();
+  String val = pri.toString().length > 4
+      ? pri.toString().substring(0, 4)
+      : pri.toString();
   if (first == second) {
     type = i;
-    String temp = tPrice.toString().length > 5 ? tPrice.toString().substring(0,4) : tPrice.toString();
+    String temp = tPrice.toString().length > 5
+        ? tPrice.toString().substring(0, 4)
+        : tPrice.toString();
     return temp;
   } else {
     if (val.contains("-") == true) return val;
@@ -152,7 +163,7 @@ List<Widget> typeWidget(Map<String, dynamic> documents, fun) {
   return lines;
 }
 
-List<Widget> addOnsHelpWidget1(QuerySnapshot data, fun) {
+List<Widget> addOnsHelpWidget1(String key, QuerySnapshot data, fun) {
   List<Widget> lines = [];
   for (var i in data.documents) {
     lines.add(
@@ -166,8 +177,36 @@ List<Widget> addOnsHelpWidget1(QuerySnapshot data, fun) {
         children: <Widget>[
           SubTitleWidget(i.documentID),
           Spacer(),
-          SubTitleWidget("+\$" + i.data["0"].substring(0, i.data["0"].length - 1)),
-          Icon(Icons.brightness_1, color: "1" == "1" ? Colors.redAccent : Colors.black)
+          SubTitleWidget(
+              "+\$" + i.data["0"].substring(0, i.data["0"].length - 1)),
+          InkWell(
+            onTap: () {
+              if (widgetList[key][i.documentID] != null &&
+                  widgetList[key][i.documentID][0] == "1") {
+                String str = i.data["0"].substring(0, i.data["0"].length - 1);
+                tPrice = tPrice - double.parse(str);
+                widgetList[key] = new Map<String,String>();
+              } else {
+                if (widgetList[key].values != null &&
+                    widgetList[key].values.length != 0) {
+                  String str = widgetList[key]
+                      .values
+                      .first
+                      .substring(1, widgetList[key].values.first.length);
+                  tPrice = tPrice - double.parse(str);
+                }
+                String str = i.data["0"].substring(0, i.data["0"].length - 1);
+                tPrice = tPrice + double.parse(str);
+                widgetList[key] = {i.documentID: "1" + str};
+              }
+              fun();
+            },
+            child: Icon(Icons.brightness_1,
+                color: widgetList[key][i.documentID] != null &&
+                        widgetList[key][i.documentID][0] == "1"
+                    ? Colors.redAccent
+                    : Colors.black),
+          )
         ],
       ),
     );
@@ -177,26 +216,27 @@ List<Widget> addOnsHelpWidget1(QuerySnapshot data, fun) {
 
 List<Widget> addOnsHelpWidget3(QuerySnapshot data, fun) {
   List<Widget> lines = [];
-  int j = 0;
   for (var i in data.documents) {
     lines.add(
       MySeparator(
         color: Colors.grey,
       ),
     );
+    if (widgetList[i.documentID] == null)
+      widgetList[i.documentID] = new Map<String, String>();
     lines.add(Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
         SubTitleWidget(i.documentID),
-        CircleFills(j, fun, i.data),
+        CircleFills(i.documentID, fun, i.data),
       ],
     ));
-    j++;
   }
   return lines;
 }
 
-List<Widget> addOnsWidget(List<DocumentSnapshot> documents, fun, String str1, String str2) {
+List<Widget> addOnsWidget(
+    List<DocumentSnapshot> documents, fun, String str1, String str2) {
   List<Widget> lines = [];
   for (DocumentSnapshot i in documents) {
     if (i.documentID == "Type") {
@@ -250,6 +290,8 @@ List<Widget> addOnsWidget(List<DocumentSnapshot> documents, fun, String str1, St
         ),
       );
     } else {
+      if (widgetList[i.documentID] == null)
+        widgetList[i.documentID] = new Map<String, String>();
       lines.add(
         StreamBuilder<Object>(
           stream: null,
@@ -279,7 +321,8 @@ List<Widget> addOnsWidget(List<DocumentSnapshot> documents, fun, String str1, St
                           default:
                             return Column(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: addOnsHelpWidget1(snapshot.data, fun),
+                              children: addOnsHelpWidget1(
+                                  i.documentID, snapshot.data, fun),
                             );
                         }
                       }
@@ -311,7 +354,6 @@ class _ItemScreenBodyState extends State<ItemScreenBody> {
   @override
   initState() {
     super.initState();
-    print('in initState about to call _getData');
     _futureForAddOns = DataBase.getAddOns(widget.cata, widget.data.documentID);
   }
 
@@ -499,7 +541,7 @@ class _SelectedButtonState extends State<SelectedButton> {
 }
 
 class CircleFills extends StatelessWidget {
-  final int tag;
+  final String tag;
   final Function fun;
   final Map<String, dynamic> data;
   CircleFills(this.tag, this.fun, this.data);
@@ -516,71 +558,93 @@ class CircleFills extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: <Widget>[
-        SubTitleWidget(getToppingTag(topping[tag][0])),
+        SubTitleWidget(getToppingTag(widgetList[tag]["0"])),
         InkWell(
           onTap: () {
-            if (topping[tag][0] != "0") {
-              if (topping[tag][0] == "1") {
-                String str = this.data[topping[tag][0]];
+            if (widgetList[tag]["0"] != "0") {
+              if (widgetList[tag]["0"] == "1") {
+                String str = this.data[widgetList[tag]["0"]];
                 tPrice =
                     tPrice - double.parse(str.substring(0, str.length - 1));
               }
-              if (topping[tag][0] == "2") {
-                String str = this.data[topping[tag][0]];
+              if (widgetList[tag]["0"] == "2") {
+                String str = this.data[widgetList[tag]["0"]];
                 tPrice =
                     tPrice - double.parse(str.substring(0, str.length - 1));
               }
-              topping[tag][0] = "0";
+              widgetList[tag]["0"] = "0";
+              String str = this.data[widgetList[tag]["0"]];
+              tPrice = tPrice + double.parse(str.substring(0, str.length - 1));
+              fun();
+            } else {
+              String str = this.data[widgetList[tag]["0"]];
+              tPrice = tPrice - double.parse(str.substring(0, str.length - 1));
+              widgetList[tag] = new Map<String, String>();
               fun();
             }
           },
           child: Icon(Icons.panorama_fish_eye,
-              color: topping[tag][0] == "0" ? Colors.redAccent : Colors.black),
+              color: widgetList[tag]["0"] == "0"
+                  ? Colors.redAccent
+                  : Colors.black),
         ),
         InkWell(
           onTap: () {
-            if (topping[tag][0] != "1") {
-              if (topping[tag][0] == "0") {
-                String str = this.data[topping[tag][0]];
+            if (widgetList[tag]["0"] != "1") {
+              if (widgetList[tag]["0"] == "0") {
+                String str = this.data[widgetList[tag]["0"]];
                 tPrice =
                     tPrice - double.parse(str.substring(0, str.length - 1));
               }
-              if (topping[tag][0] == "2") {
-                String str = this.data[topping[tag][0]];
+              if (widgetList[tag]["0"] == "2") {
+                String str = this.data[widgetList[tag]["0"]];
                 tPrice =
                     tPrice - double.parse(str.substring(0, str.length - 1));
               }
-              topping[tag][0] = "1";
-              String str = this.data[topping[tag][0]];
+              widgetList[tag]["0"] = "1";
+              String str = this.data[widgetList[tag]["0"]];
               tPrice = tPrice + double.parse(str.substring(0, str.length - 1));
+              fun();
+            } else {
+              String str = this.data[widgetList[tag]["0"]];
+              tPrice = tPrice - double.parse(str.substring(0, str.length - 1));
+              widgetList[tag] = new Map<String, String>();
               fun();
             }
           },
           child: Icon(Icons.blur_circular,
-              color: topping[tag][0] == "1" ? Colors.redAccent : Colors.black),
+              color: widgetList[tag]["0"] == "1"
+                  ? Colors.redAccent
+                  : Colors.black),
         ),
         InkWell(
           onTap: () {
-            if (topping[tag][0] != "2") {
-              if (topping[tag][0] == "0") {
-                String str = this.data[topping[tag][0]];
+            if (widgetList[tag]["0"] != "2") {
+              if (widgetList[tag]["0"] == "0") {
+                String str = this.data[widgetList[tag]["0"]];
                 tPrice =
                     tPrice - double.parse(str.substring(0, str.length - 1));
               }
-              if (topping[tag][0] == "1") {
-                String str = this.data[topping[tag][0]];
+              if (widgetList[tag]["0"] == "1") {
+                String str = this.data[widgetList[tag]["0"]];
                 tPrice =
                     tPrice - double.parse(str.substring(0, str.length - 1));
               }
-              topping[tag][0] = "2";
-
-              String str = this.data[topping[tag][0]];
+              widgetList[tag]["0"] = "2";
+              String str = this.data[widgetList[tag]["0"]];
               tPrice = tPrice + double.parse(str.substring(0, str.length - 1));
+              fun();
+            } else {
+              String str = this.data[widgetList[tag]["0"]];
+              tPrice = tPrice - double.parse(str.substring(0, str.length - 1));
+              widgetList[tag] = new Map<String, String>();
               fun();
             }
           },
           child: Icon(Icons.brightness_1,
-              color: topping[tag][0] == "2" ? Colors.redAccent : Colors.black),
+              color: widgetList[tag]["0"] == "2"
+                  ? Colors.redAccent
+                  : Colors.black),
         ),
       ],
     );

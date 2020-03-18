@@ -39,14 +39,18 @@ class MenuScreenBody extends StatelessWidget {
               switch (snapshot.connectionState) {
                 case ConnectionState.waiting:
                   return Container(
-                      height: 45,
-                      child: Center(
-                          child: CircularProgressIndicator(
+                    height: 45,
+                    child: Center(
+                      child: CircularProgressIndicator(
                         valueColor:
                             new AlwaysStoppedAnimation<Color>(Colors.redAccent),
-                      )));
+                      ),
+                    ),
+                  );
                 default:
-                  return Column(children: catagories(snapshot.data.documents));
+                  return Column(
+                    children: catagories(snapshot.data.documents),
+                  );
               }
             }
           },
@@ -79,7 +83,7 @@ class CatagoryTile extends StatelessWidget {
             child: TitleWidget(documents.documentID),
           ),
           StreamBuilder<QuerySnapshot>(
-            stream: DataBase.getSubCatagories(documents.documentID),
+            stream: DataBase.getPizza(documents.documentID),
             builder:
                 (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
               if (snapshot.hasError) {
