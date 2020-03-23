@@ -7,6 +7,7 @@ import 'package:prince_of_pizza/Model/Item.dart';
 import 'package:prince_of_pizza/Model/order.dart';
 import 'package:prince_of_pizza/UI/home_screen.dart';
 import 'package:prince_of_pizza/UI/menu_screen.dart';
+import 'package:prince_of_pizza/UI/review_order.dart';
 import 'package:prince_of_pizza/administration/admin.dart';
 import 'package:prince_of_pizza/dataBase/auth.dart';
 import 'package:prince_of_pizza/dataBase/dataBase.dart';
@@ -78,7 +79,10 @@ class CheckoutScreen3 extends StatelessWidget {
               FloatingActionButtonLocation.centerFloat,
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ReviewOrders()),
+              );
             },
             icon: Icon(Icons.rate_review),
             label: Text('Review order'),
