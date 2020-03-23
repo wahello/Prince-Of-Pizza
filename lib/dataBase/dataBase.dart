@@ -4,7 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:prince_of_pizza/Extra/global.dart';
+import 'package:prince_of_pizza/Model/Item.dart';
 import 'package:prince_of_pizza/administration/admin.dart';
+import 'package:random_string/random_string.dart';
 
 Firestore _fireStore = Firestore.instance;
 
@@ -185,4 +188,23 @@ class DataBase {
   static Stream<DocumentSnapshot> getUserDetails(String id) {
     return _fireStore.collection("User").document(id).snapshots();
   }
+
+  static placeOrderDetails() async {
+    String oId = DateTime.now().toString() + randomAlpha(5);
+    Map<String, Object> data = Map<String, Object>();
+    data["firebaseId"] = MyGlobals.myOrder.firebaseId;
+    data["instructions"] = MyGlobals.myOrder.instructions;
+    data["paymentMethod"] = MyGlobals.myOrder.paymentMethod;
+    data["date"] = DateTime.now().toString();
+    data["status"] = MyGlobals.myOrder.status;
+    data["totalAmount"] = MyGlobals.myOrder.totalAmount;
+    data["extrasList"] = MyGlobals.extrasList;
+    data["iteamsList"] = Item.convert(MyGlobals.iteamsList);
+    return await _fireStore.collection("Orders").document(oId).setData(data);
+  }
+
+  static Stream<QuerySnapshot> getOrdersList() {
+    return _fireStore.collection("Orders").limit(30).snapshots();
+  }
+
 }

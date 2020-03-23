@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -6,6 +8,8 @@ import 'package:prince_of_pizza/UI/home_screen.dart';
 import 'package:prince_of_pizza/administration/basic/basicInfo.dart';
 import 'package:prince_of_pizza/administration/catagories/listCatagories.dart';
 import 'package:prince_of_pizza/administration/extras/listExtras.dart';
+import 'package:prince_of_pizza/Extra/NotificationServices.dart';
+import 'package:prince_of_pizza/administration/order/orders.dart';
 import 'package:prince_of_pizza/administration/pizza/listCatagories.dart';
 
 class AdminPanal extends StatefulWidget {
@@ -14,9 +18,27 @@ class AdminPanal extends StatefulWidget {
 }
 
 class _AdminPanalState extends State<AdminPanal> {
+  final FirebaseMessaging _fcm = FirebaseMessaging();
+
   @override
   void initState() {
     super.initState();
+    if (Platform.isIOS) _fcm.requestNotificationPermissions(IosNotificationSettings());
+    _fcm.configure(
+      onMessage: (Map<String, dynamic> message) async {
+        print("onMessage: $message");
+        showMyNotification();
+      },
+      onLaunch: (Map<String, dynamic> message) async {
+        print("onLaunch: $message");
+        Navigator.of(context).push(
+            PageRouteBuilder(pageBuilder: (_, __, ___) => new MyOrders()));
+      },
+      onResume: (Map<String, dynamic> message) async {
+        print("onResume: $message");
+      },
+    );
+    _fcm.subscribeToTopic('adminMyPermission');
   }
 
   fun() {
@@ -112,6 +134,33 @@ class _AdminPanalState extends State<AdminPanal> {
             }),
             _buildTile(
                 Padding(
+                    padding: EdgeInsets.all(15.0),
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Center(
+                              child: Material(
+                                  color: Colors.redAccent,
+                                  shape: CircleBorder(),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Icon(Icons.card_giftcard,
+                                        color: Colors.white, size: 30.0),
+                                  ))),
+                          Padding(padding: EdgeInsets.only(bottom: 10.0)),
+                          Center(
+                              child: Text('Orders',
+                                  style: TextStyle(
+                                      color: Colors.black54,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12.0))),
+                        ])), () {
+              Navigator.of(context).push(PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => new MyOrders()));
+            }),
+            _buildTile(
+                Padding(
                   padding: const EdgeInsets.all(15.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -144,7 +193,10 @@ class _AdminPanalState extends State<AdminPanal> {
                   ),
                 ), () {
               Navigator.of(context).push(
-                  PageRouteBuilder(pageBuilder: (_, __, ___) => new ListCatagoriesForPizza()));
+                PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => new ListCatagoriesForPizza(),
+                ),
+              );
             }),
             _buildTile(
               Padding(
@@ -217,32 +269,37 @@ class _AdminPanalState extends State<AdminPanal> {
                     ],
                   ),
                 ), () {
-              Navigator.of(context).push(
-                  PageRouteBuilder(pageBuilder: (_, __, ___) => new ListCatagories()));
+              Navigator.of(context).push(PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => new ListCatagories()));
             }),
             _buildTile(
               Padding(
-                padding: const EdgeInsets.all(15.0),
+                padding: EdgeInsets.all(15.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Center(
-                        child: Material(
-                            color: Colors.redAccent,
-                            shape: CircleBorder(),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Icon(Icons.exit_to_app,
-                                  color: Colors.white, size: 30.0),
-                            ))),
+                      child: Material(
+                        color: Colors.redAccent,
+                        shape: CircleBorder(),
+                        child: Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: Icon(Icons.exit_to_app,
+                              color: Colors.white, size: 30.0),
+                        ),
+                      ),
+                    ),
                     Padding(padding: EdgeInsets.only(bottom: 10.0)),
                     Center(
-                        child: Text('LogOut',
-                            style: TextStyle(
-                                color: Colors.black54,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12.0))),
+                      child: Text(
+                        'LogOut',
+                        style: TextStyle(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.0),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -295,7 +352,7 @@ class _AdminPanalState extends State<AdminPanal> {
             StaggeredTile.extent(1, 110.0),
             StaggeredTile.extent(1, 110.0),
             StaggeredTile.extent(1, 110.0),
-            StaggeredTile.extent(1, 110.0),
+            StaggeredTile.extent(2, 110.0),
           ],
         ),
       ),

@@ -35,6 +35,11 @@ class _CartScreenState extends State<CartScreen> {
               FloatingActionButtonLocation.centerFloat,
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () async {
+              MyGlobals.myOrder.status = "0";
+              MyGlobals.myOrder.totalAmount =
+                  MyGlobals.countMoney().toString().length > 8
+                      ? "\$" + MyGlobals.countMoney().toString().substring(0, 8)
+                      : "\$" + MyGlobals.countMoney().toString().toString();
               if (await FirebaseAuth.instance.currentUser() != null)
                 MyGlobals.currentUser.firebaseId =
                     (await FirebaseAuth.instance.currentUser()).uid;
@@ -125,7 +130,9 @@ class _CartScreenBodyState extends State<CartScreenBody> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             SubTitleWidget(i.quantity.toString() + ' ' + i.subCatagory),
-            SubTitleWidget("\$" + i.price.toString()),
+            SubTitleWidget(i.price.toString().length > 4
+                ? "\$" + i.price.toString().substring(0, 4)
+                : "\$" + i.price.toString()),
           ],
         ),
       );
@@ -240,7 +247,9 @@ class _CartScreenBodyState extends State<CartScreenBody> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   MenuTitleWidget('Subtotal'),
-                  SubTitleWidget("\$" + MyGlobals.countMoney().toString()),
+                  SubTitleWidget(MyGlobals.countMoney().toString().length > 8
+                      ? "\$" + MyGlobals.countMoney().toString().substring(0, 8)
+                      : "\$" + MyGlobals.countMoney().toString().toString()),
                 ],
               ),
               Row(

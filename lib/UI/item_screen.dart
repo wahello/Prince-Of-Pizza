@@ -76,7 +76,8 @@ class _ItemScreenState extends State<ItemScreen> {
                     subCatagory: widget.data.documentID,
                     quantity: amount,
                     price: tPrice * amount,
-                    optional: _controller.text));
+                    optional: widgetList,
+                    requirments: _controller.text));
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => CartScreen()),
@@ -108,10 +109,6 @@ String calculatePriceWithSymboles(String second, int i) {
       : pri.toString();
   if (first == second) {
     type = i;
-    // String temp = tPrice.toString().length > 5
-    //     ? tPrice.toString().substring(0, 4)
-    // : tPrice.toString();
-    //return temp + "\$";
     return "";
   } else {
     if (val.contains("-") == true) return val + "\$";
@@ -185,7 +182,7 @@ List<Widget> addOnsHelpWidget1(String key, QuerySnapshot data, fun) {
                   widgetList[key][i.documentID][0] == "1") {
                 String str = i.data["0"].substring(0, i.data["0"].length - 1);
                 tPrice = tPrice - double.parse(str);
-                widgetList[key] = new Map<String,String>();
+                widgetList[key] = new Map<String, String>();
               } else {
                 if (widgetList[key].values != null &&
                     widgetList[key].values.length != 0) {
@@ -263,25 +260,33 @@ List<Widget> addOnsWidget(
                 stream: DataBase.getAddOnsDetails(str1, str2, i.documentID),
                 builder: (BuildContext context,
                     AsyncSnapshot<QuerySnapshot> snapshot) {
-                  if (snapshot.hasError) {
-                    return new Text('Error: ${snapshot.error}');
-                  } else {
-                    switch (snapshot.connectionState) {
-                      case ConnectionState.waiting:
-                        return Container(
-                          height: 45,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              valueColor: new AlwaysStoppedAnimation<Color>(
-                                  Colors.redAccent),
+                  if (widgetList[i.documentID] == null) {
+                    if (snapshot.hasError) {
+                      return new Text('Error: ${snapshot.error}');
+                    } else {
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                          return Container(
+                            height: 45,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                valueColor: new AlwaysStoppedAnimation<Color>(
+                                    Colors.redAccent),
+                              ),
                             ),
-                          ),
-                        );
-                      default:
-                        return Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: addOnsHelpWidget3(snapshot.data, fun));
+                          );
+                        default:
+                          widgetList[i.documentID] = new Map<String, String>();
+                          widgetList[i.documentID]["null"] = "3";
+                          return Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: addOnsHelpWidget3(snapshot.data, fun));
+                      }
                     }
+                  } else {
+                    return Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: addOnsHelpWidget3(snapshot.data, fun));
                   }
                 },
               )
@@ -290,48 +295,51 @@ List<Widget> addOnsWidget(
         ),
       );
     } else {
-      if (widgetList[i.documentID] == null)
-        widgetList[i.documentID] = new Map<String, String>();
       lines.add(
-        StreamBuilder<Object>(
-          stream: null,
-          builder: (context, snapshot) {
-            return HomeScreenCard(
-              Column(
-                children: <Widget>[
-                  TitleWidget(i.documentID),
-                  StreamBuilder<QuerySnapshot>(
-                    stream: DataBase.getAddOnsDetails(str1, str2, i.documentID),
-                    builder: (BuildContext context,
-                        AsyncSnapshot<QuerySnapshot> snapshot) {
-                      if (snapshot.hasError) {
-                        return new Text('Error: ${snapshot.error}');
-                      } else {
-                        switch (snapshot.connectionState) {
-                          case ConnectionState.waiting:
-                            return Container(
-                              height: 45,
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  valueColor: new AlwaysStoppedAnimation<Color>(
-                                      Colors.redAccent),
-                                ),
+        HomeScreenCard(
+          Column(
+            children: <Widget>[
+              TitleWidget(i.documentID),
+              StreamBuilder<QuerySnapshot>(
+                stream: DataBase.getAddOnsDetails(str1, str2, i.documentID),
+                builder: (BuildContext context,
+                    AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if (widgetList[i.documentID] == null) {
+                    if (snapshot.hasError) {
+                      return new Text('Error: ${snapshot.error}');
+                    } else {
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                          return Container(
+                            height: 45,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                valueColor: new AlwaysStoppedAnimation<Color>(
+                                    Colors.redAccent),
                               ),
-                            );
-                          default:
-                            return Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: addOnsHelpWidget1(
-                                  i.documentID, snapshot.data, fun),
-                            );
-                        }
+                            ),
+                          );
+                        default:
+                          widgetList[i.documentID] = new Map<String, String>();
+//                          widgetList[i.documentID]["null"] = "1";
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: addOnsHelpWidget1(
+                                i.documentID, snapshot.data, fun),
+                          );
                       }
-                    },
-                  )
-                ],
-              ),
-            );
-          },
+                    }
+                  } else {
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children:
+                          addOnsHelpWidget1(i.documentID, snapshot.data, fun),
+                    );
+                  }
+                },
+              )
+            ],
+          ),
         ),
       );
     }
@@ -350,7 +358,6 @@ class ItemScreenBody extends StatefulWidget {
 
 class _ItemScreenBodyState extends State<ItemScreenBody> {
   var _futureForAddOns;
-
   @override
   initState() {
     super.initState();
@@ -560,63 +567,74 @@ class CircleFills extends StatelessWidget {
       children: <Widget>[
         SubTitleWidget(getToppingTag(widgetList[tag]["0"])),
         InkWell(
-          onTap: () {
-            if (widgetList[tag]["0"] != "0") {
-              if (widgetList[tag]["0"] == "1") {
+            onTap: () {
+              if (widgetList[tag]["0"] != "0") {
+                if (widgetList[tag]["0"] == "1") {
+                  String str = this.data[widgetList[tag]["0"]];
+                  tPrice =
+                      tPrice - double.parse(str.substring(0, str.length - 1));
+                }
+                if (widgetList[tag]["0"] == "2") {
+                  String str = this.data[widgetList[tag]["0"]];
+                  tPrice =
+                      tPrice - double.parse(str.substring(0, str.length - 1));
+                }
+                widgetList[tag]["0"] = "0";
+                String str = this.data[widgetList[tag]["0"]];
+                tPrice =
+                    tPrice + double.parse(str.substring(0, str.length - 1));
+                fun();
+              } else {
                 String str = this.data[widgetList[tag]["0"]];
                 tPrice =
                     tPrice - double.parse(str.substring(0, str.length - 1));
+                widgetList[tag] = new Map<String, String>();
+                fun();
               }
-              if (widgetList[tag]["0"] == "2") {
-                String str = this.data[widgetList[tag]["0"]];
-                tPrice =
-                    tPrice - double.parse(str.substring(0, str.length - 1));
-              }
-              widgetList[tag]["0"] = "0";
-              String str = this.data[widgetList[tag]["0"]];
-              tPrice = tPrice + double.parse(str.substring(0, str.length - 1));
-              fun();
-            } else {
-              String str = this.data[widgetList[tag]["0"]];
-              tPrice = tPrice - double.parse(str.substring(0, str.length - 1));
-              widgetList[tag] = new Map<String, String>();
-              fun();
-            }
-          },
-          child: Icon(Icons.panorama_fish_eye,
-              color: widgetList[tag]["0"] == "0"
-                  ? Colors.redAccent
-                  : Colors.black),
-        ),
+            },
+            child: Container(
+              width: 20,
+              child: Image.asset(
+                widgetList[tag]["0"] == "0"
+                    ? 'assets/leftR.png'
+                    : 'assets/leftB.png',
+              ),
+            )),
+        SizedBox(width: 2),
         InkWell(
-          onTap: () {
-            if (widgetList[tag]["0"] != "1") {
-              if (widgetList[tag]["0"] == "0") {
+            onTap: () {
+              if (widgetList[tag]["0"] != "1") {
+                if (widgetList[tag]["0"] == "0") {
+                  String str = this.data[widgetList[tag]["0"]];
+                  tPrice =
+                      tPrice - double.parse(str.substring(0, str.length - 1));
+                }
+                if (widgetList[tag]["0"] == "2") {
+                  String str = this.data[widgetList[tag]["0"]];
+                  tPrice =
+                      tPrice - double.parse(str.substring(0, str.length - 1));
+                }
+                widgetList[tag]["0"] = "1";
+                String str = this.data[widgetList[tag]["0"]];
+                tPrice =
+                    tPrice + double.parse(str.substring(0, str.length - 1));
+                fun();
+              } else {
                 String str = this.data[widgetList[tag]["0"]];
                 tPrice =
                     tPrice - double.parse(str.substring(0, str.length - 1));
+                widgetList[tag] = new Map<String, String>();
+                fun();
               }
-              if (widgetList[tag]["0"] == "2") {
-                String str = this.data[widgetList[tag]["0"]];
-                tPrice =
-                    tPrice - double.parse(str.substring(0, str.length - 1));
-              }
-              widgetList[tag]["0"] = "1";
-              String str = this.data[widgetList[tag]["0"]];
-              tPrice = tPrice + double.parse(str.substring(0, str.length - 1));
-              fun();
-            } else {
-              String str = this.data[widgetList[tag]["0"]];
-              tPrice = tPrice - double.parse(str.substring(0, str.length - 1));
-              widgetList[tag] = new Map<String, String>();
-              fun();
-            }
-          },
-          child: Icon(Icons.blur_circular,
-              color: widgetList[tag]["0"] == "1"
-                  ? Colors.redAccent
-                  : Colors.black),
-        ),
+            },
+            child: Container(
+              width: 20,
+              child: Image.asset(
+                widgetList[tag]["0"] == "1"
+                    ? 'assets/rightR.png'
+                    : 'assets/rightB.png',
+              ),
+            )),
         InkWell(
           onTap: () {
             if (widgetList[tag]["0"] != "2") {

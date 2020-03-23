@@ -1,13 +1,16 @@
-import 'package:braintree_payment/braintree_payment.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:prince_of_pizza/Extra/global.dart';
 import 'package:prince_of_pizza/Extra/styles.dart';
+import 'package:prince_of_pizza/Model/Item.dart';
+import 'package:prince_of_pizza/Model/order.dart';
 import 'package:prince_of_pizza/UI/home_screen.dart';
+import 'package:prince_of_pizza/UI/menu_screen.dart';
 import 'package:prince_of_pizza/administration/admin.dart';
 import 'package:prince_of_pizza/dataBase/auth.dart';
 import 'package:prince_of_pizza/dataBase/dataBase.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 
 TextEditingController first = TextEditingController(),
@@ -74,7 +77,9 @@ class CheckoutScreen3 extends StatelessWidget {
           floatingActionButtonLocation:
               FloatingActionButtonLocation.centerFloat,
           floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pop(context);
+            },
             icon: Icon(Icons.rate_review),
             label: Text('Review order'),
             backgroundColor: Colors.redAccent,
@@ -284,8 +289,56 @@ class CheckoutScreenBody2 extends StatelessWidget {
 }
 
 class CheckoutScreenBody3 extends StatelessWidget {
+  confirmPayment(context, String pay) async {
+    MyGlobals.myOrder.firebaseId = MyGlobals.currentUser.firebaseId;
+    MyGlobals.myOrder.paymentMethod = pay;
+    Fluttertoast.showToast(
+        msg: ' Wait ',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIos: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0);
+    await DataBase.placeOrderDetails();
+    Fluttertoast.showToast(
+        msg: ' Order Place successfully ',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIos: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0);
+    MyGlobals.extrasList = new Map();
+    MyGlobals.myOrder = new Order();
+    MyGlobals.iteamsList = new List<Item>();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => MenuScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    void _handlePaymentSuccess(PaymentSuccessResponse response) {
+      confirmPayment(context, "0");
+    }
+
+    void _handlePaymentError(PaymentFailureResponse response) {
+      Fluttertoast.showToast(
+          msg: ' Payment Failed ',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIos: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0);
+    }
+
+    void _handleExternalWallet(ExternalWalletResponse response) {
+      confirmPayment(context, "0");
+    }
+
     return ListView(
       children: <Widget>[
         Stack(
@@ -316,46 +369,68 @@ class CheckoutScreenBody3 extends StatelessWidget {
                 padding: const EdgeInsets.all(8.0),
                 child: InkWell(
                   onTap: () async {
-                    showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return Center(
-                              child: CircularProgressIndicator(
-                            valueColor: new AlwaysStoppedAnimation<Color>(
-                                Colors.redAccent),
-                          ));
-                        });
-                    BraintreePayment braintreePayment = new BraintreePayment();
-                    braintreePayment
-                        .showDropIn(
-                            nonce: MyGlobals.clientNonce,
-                            amount: MyGlobals.countMoney().toString(),
-                            enableGooglePay: true)
-                        .then((data) {
-                      if (data['status'] == "success") {
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-
-                        Fluttertoast.showToast(
-                            msg: ' Payment Successfully ',
-                            toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.CENTER,
-                            timeInSecForIos: 1,
-                            backgroundColor: Colors.red,
-                            textColor: Colors.white,
-                            fontSize: 16.0);
-                      } else {
-                        Navigator.pop(context);
-                        Fluttertoast.showToast(
-                            msg: ' Payment Failed ',
-                            toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.CENTER,
-                            timeInSecForIos: 1,
-                            backgroundColor: Colors.red,
-                            textColor: Colors.white,
-                            fontSize: 16.0);
+                    String mytry = MyGlobals.countMoney().toString();
+                    var split = mytry.split('.');
+                    String spl;
+                    if (split[1].length == 2)
+                      spl = split[1];
+                    else if (split[1].length < 2) {
+                      if (split[1].length == 0) spl = "00";
+                      if (split[1].length == 1) spl = split[1] + "0";
+                    } else if (split[1].length > 2)
+                      spl = split[1].substring(0, 2);
+                    var combineSplit = split[0] + spl;
+                    int amount = int.parse(combineSplit);
+                    var _razorpay = Razorpay();
+                    _razorpay.on(
+                        Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+                    _razorpay.on(
+                        Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+                    _razorpay.on(
+                        Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+                    var options = {
+                      'key': MyGlobals.payKey,
+                      'amount': amount,
+                      'name': MyGlobals.currentUser.profileName,
+                      //'currency': "USD", - activate
+                      'description': "Payment For Prince Of Pizza",
+                      'prefill': {
+                        'contact': MyGlobals.currentUser.phoneno,
+                        'email': MyGlobals.currentUser.email
                       }
-                    });
+                    };
+                    _razorpay.open(options);
+                    // https://razorpay.com/docs/payment-gateway/flutter-integration/
+                    // showDialog(
+                    //     context: context,
+                    //     builder: (BuildContext context) {
+                    //       return Center(
+                    //           child: CircularProgressIndicator(
+                    //         valueColor: new AlwaysStoppedAnimation<Color>(
+                    //             Colors.redAccent),
+                    //       ));
+                    //     });
+                    // BraintreePayment braintreePayment = new BraintreePayment();
+                    // braintreePayment
+                    //     .showDropIn(
+                    //         nonce: MyGlobals.clientNonce,
+                    //         amount: MyGlobals.countMoney().toString(),
+                    //         enableGooglePay: true)
+                    //     .then((data) {
+                    //   if (data['status'] == "success") {
+                    //     // -------------
+                    //   } else {
+                    //     Navigator.pop(context);
+                    //     Fluttertoast.showToast(
+                    //         msg: ' Payment Failed ',
+                    //         toastLength: Toast.LENGTH_SHORT,
+                    //         gravity: ToastGravity.CENTER,
+                    //         timeInSecForIos: 1,
+                    //         backgroundColor: Colors.red,
+                    //         textColor: Colors.white,
+                    //         fontSize: 16.0);
+                    //   }
+                    // });
                   },
                   child: Row(
                     children: <Widget>[
@@ -374,7 +449,9 @@ class CheckoutScreenBody3 extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: InkWell(
-                  onTap: () {},
+                  onTap: () async {
+                    confirmPayment(context, "1");
+                  },
                   child: Row(
                     children: <Widget>[
                       Icon(
@@ -392,7 +469,9 @@ class CheckoutScreenBody3 extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: InkWell(
-                  onTap: () {},
+                  onTap: () {
+                    // -------------
+                  },
                   child: Row(
                     children: <Widget>[
                       Icon(
@@ -543,7 +622,8 @@ void signInAlert(BuildContext context) {
                       textColor: Colors.white,
                       fontSize: 16.0);
                 } else {
-                  MyGlobals.currentUser.firebaseId = await Accounts.signInWithEmail(email.text, password.text);
+                  MyGlobals.currentUser.firebaseId =
+                      await Accounts.signInWithEmail(email.text, password.text);
                   if (MyGlobals.currentUser.firebaseId == null) {
                     Fluttertoast.showToast(
                         msg: '  Enter Corrent Email or Password  ',
@@ -555,14 +635,12 @@ void signInAlert(BuildContext context) {
                         fontSize: 16.0);
                   } else {
                     Navigator.pop(context);
-                    if(email.text == "prince@of.pizza"){
+                    if (email.text == "prince@of.pizza") {
                       Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => AdminPanal())
-                      );
-                    }
-                    else{
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => AdminPanal()));
+                    } else {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(

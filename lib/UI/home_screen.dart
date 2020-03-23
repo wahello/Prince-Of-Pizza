@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:prince_of_pizza/Extra/global.dart';
 import 'package:prince_of_pizza/Extra/styles.dart';
 import 'package:prince_of_pizza/UI/checkout_screen.dart';
 import 'package:prince_of_pizza/UI/menu_screen.dart';
@@ -75,6 +76,7 @@ class HomeScreenBody extends StatelessWidget {
                             new AlwaysStoppedAnimation<Color>(Colors.redAccent),
                       )));
                 default:
+                  MyGlobals.logo = snapshot.data.documents[2].data["logo"];
                   return HomeScreenCard(
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
