@@ -4,6 +4,8 @@ import 'package:folding_cell/folding_cell/widget.dart';
 import 'package:prince_of_pizza/Extra/global.dart';
 import 'package:prince_of_pizza/dataBase/Database.dart';
 
+TextEditingController _controller;
+
 class ReviewOrders extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -17,6 +19,7 @@ class ReviewOrders extends StatelessWidget {
               FloatingActionButtonLocation.centerFloat,
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
+              MyGlobals.myOrder.instructions = _controller.text == null ? "" : _controller.text;
               Navigator.pop(context);
             },
             icon: Icon(Icons.local_pizza),
@@ -30,6 +33,7 @@ class ReviewOrders extends StatelessWidget {
 }
 
 class HomeScreenBody extends StatelessWidget {
+
   final _foldingCellLocationKey = GlobalKey<SimpleFoldingCellState>();
   final _foldingCellPayKey = GlobalKey<SimpleFoldingCellState>();
 
@@ -39,6 +43,7 @@ class HomeScreenBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _controller = new TextEditingController();
     return Container(
       color: Color(0xFF2e282a),
       alignment: Alignment.topCenter,
@@ -269,13 +274,16 @@ class HomeScreenBody extends StatelessWidget {
                               Icon(Icons.check_circle_outline),
                               SizedBox(width: 15),
                               Column(
+                                textDirection: TextDirection.ltr,
                                 children: <Widget>[
                                   Text("Order Options",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16)),
                                   Spacer(),
-                                  Text("Delivery Tip"),
+                                  Text("Delivery Tip",
+                                  textDirection: TextDirection.ltr,
+                                    style: TextStyle(color: Colors.black)),
                                   Spacer(),
                                   Text(
                                     "Add Instructions",
@@ -310,6 +318,7 @@ class HomeScreenBody extends StatelessWidget {
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16)),
+                                  Spacer(),
                                   Container(
                                     width:
                                         MediaQuery.of(context).size.width - 80,
@@ -318,7 +327,7 @@ class HomeScreenBody extends StatelessWidget {
                                           MainAxisAlignment.center,
                                       children: <Widget>[
                                         Text(
-                                            "Be nice and tip well. Unlink other apps, every penny"),
+                                            "Be nice and tip well. Unlink other apps,"),
                                       ],
                                     ),
                                   ),
@@ -329,7 +338,7 @@ class HomeScreenBody extends StatelessWidget {
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: <Widget>[
-                                        Text("goes to the shop."),
+                                        Text("every penny goes to the shop."),
                                       ],
                                     ),
                                   ),
@@ -355,6 +364,7 @@ class HomeScreenBody extends StatelessWidget {
                                       width: MediaQuery.of(context).size.width -
                                           120,
                                       child: TextField(
+                                        controller: _controller,
                                         decoration: InputDecoration(
                                             border: InputBorder.none,
                                             hintText:
