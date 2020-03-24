@@ -11,7 +11,7 @@ class MyGlobals {
   static Order myOrder = new Order();
   static List<Item> iteamsList = new List<Item>();
 
-  static String payKey = "rzp_test_m3uNnpSZoqkaLp";
+  static String payKey = "rzp_test_cZRUzPrOzP0A6Y";
 
   static double countMoney() {
     double count = 0.0;
@@ -22,4 +22,5 @@ class MyGlobals {
         count + double.parse(v.toString().substring(1, v.toString().length)));
     return count;
   }
+
 }
